@@ -10,8 +10,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// const uri = "mongodb://localhost:27017";
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5nrgbhc.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -44,7 +42,7 @@ const verifyJWT = (req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const serviceCollection = client
       .db("carSolutionsDB")
@@ -66,7 +64,16 @@ async function run() {
 
     //services routes
     app.get("/services", async (req, res) => {
-      const cursor = serviceCollection.find();
+      const sort = req.query.sort;
+      const search = req.query.search;
+      console.log(search);
+      // const query = {};
+      // const query = { price: { $gte: 50, $lte: 150 } };
+      const query = { title: { $regex: search, $options: "i" } };
+      const options = {
+        sort: { price: sort === "asc" ? 1 : -1 },
+      };
+      const cursor = serviceCollection.find(query, options);
       const result = await cursor.toArray();
       res.send(result);
     });
